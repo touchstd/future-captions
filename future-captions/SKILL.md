@@ -12,7 +12,7 @@ A guided, step-by-step caption studio. Claude runs every action; the user only u
 - **Always speak English with the user**, whatever language the video or the user's messages are in. Transcripts stay in the spoken language of the video — never translate them unless the user asks.
 - Follow the steps in order and **stop at every checkpoint** marked ⏸ until the user answers.
 - Keep messages short and friendly. Never show commands, tracebacks or file paths the user doesn't need; summarize problems in one plain sentence.
-- Work directory: `/home/claude/fc_work`. Final renders go to `/home/claude/fc_work/out/`; the user downloads them as **one ZIP named after the source video** (e.g. `Interview 01.mp4` → `Interview 01.zip`) placed in `/mnt/user-data/outputs/` and delivered with `present_files`.
+- Work directory: `/home/claude/fc_work`. Final files go to `/mnt/user-data/outputs/`, named after the source video (e.g. `Interview 01.mp4` → `Interview 01_captioned.mp4`), and are delivered **as separate files** with `present_files` so the user can download only the ones they want.
 - Scripts live in this skill's `scripts/` folder (referred to below as `$S`). Resolve the real path first, e.g. `S=$(dirname "$(find /mnt/skills -path '*future-captions/SKILL.md' | head -1)")/scripts`.
 
 ## Step 0 — Welcome and upload
@@ -91,15 +91,16 @@ Map the answers to flags: punctuation keep/hide → `--punct keep|hide`; case as
 1. **Presets 05 and 06 only — pick highlight words.** Read the approved transcript and choose the most impactful words or short phrases (numbers and money, names, strong emotions, punchlines, surprising words) — roughly one per two or three captions, never more than one per caption. Pass them as `--emphasis "grand prize,congratulations,really"`. After delivery, tell the user in one line which words you highlighted and that they can change them.
 2. Tell the user rendering has started (it takes roughly 1–3× the video length).
 3. Run (every MOV the skill produces must stay QuickTime Animation with alpha so After Effects reads the transparency — never change the encoder settings in `render.py`):
-   `python "$S/render.py" --video "<video>" --transcript /home/claude/fc_work/transcript.json --preset <01-06> --lines <1|2> --punct <keep|hide> --case <original|lower|upper> [--emphasis "..."] --out-dir /home/claude/fc_work/out --zip-to /mnt/user-data/outputs`
-   Output names come from the uploaded video's file name, so the ZIP is `/mnt/user-data/outputs/<video name>.zip`. Never rename it.
+   `python "$S/render.py" --video "<video>" --transcript /home/claude/fc_work/transcript.json --preset <01-06> --lines <1|2> --punct <keep|hide> --case <original|lower|upper> [--emphasis "..."] --out-dir /mnt/user-data/outputs`
+   Output names come from the uploaded video's file name. Never rename them. Don't pack them into a ZIP unless the user asks for one (then add `--zip-to /mnt/user-data/outputs`, which creates `<video name>.zip`, and present it alongside the files).
    Optional flags when the user asks: `--scale 1.2` (bigger text), `--accent "#FF4D6D"` (box / active-word color), `--emph-color "#34D1BF"` (highlight color for 05/06), `--text-color "#FFE14D"`, `--position middle|top`, `--webm` (extra web-friendly alpha file).
    The script ends with `After Effects alpha check: OK`. If it prints a WARNING instead, do not deliver the MOV: rerun once; if it fails again, tell the user in one line that the transparent file failed its check and deliver the MP4 and SRT only.
-4. Deliver with `present_files`, passing **the ZIP first**, then `/home/claude/fc_work/out/<name>_captioned.mp4` so the user can watch the result in the chat. Don't present the other files individually. Tell the user the ZIP `<name>.zip` contains a folder `<name>/` with:
+4. Deliver with **one** `present_files` call listing each file separately, in this order, so each gets its own download button:
    - `<name>_captioned.mp4` — the video with captions burned in.
    - `<name>_captions_alpha.mov` — captions only on a transparent background, in **QuickTime Animation** (32-bit ARGB, "Millions of Colors+"), which After Effects imports with its alpha channel natively. Same size, frame rate and duration as the original: place it on the layer above the video at 0:00 and it lines up automatically. Works in Premiere Pro, DaVinci Resolve and Final Cut Pro too. If edges ever look haloed, right-click the footage → Interpret Footage → Main → Alpha: **Straight – Unmatted**.
    - `<name>.srt` — a standard subtitle file (bonus, for YouTube or players), with the same text style.
    - `<name>_captions_alpha.webm` — only if `--webm` was used.
+   After the files, add one short line per file saying what it's for (as above, condensed), so the user can pick what to download.
 5. Close with one line offering tweaks: size, color, position, highlight words, text style, a different preset, or one/two lines. Tweaks only need Step 4 again — never re-transcribe unless the user uploads a new video.
 
 ## Troubleshooting
