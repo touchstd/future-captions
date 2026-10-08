@@ -1,0 +1,47 @@
+<h2 class="sr-only">Transcript review with timestamps, an approve button and an edit mode where each segment's text can be changed.</h2>
+<style>
+.fc-seg{display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 12px;padding:12px 0;border-top:0.5px solid var(--border)}
+.fc-n{font-size:13px;color:var(--text-secondary);font-family:var(--font-mono)}
+.fc-ts{font-size:12px;color:var(--text-muted);font-family:var(--font-mono)}
+.fc-tx{font-size:15px;line-height:1.6;color:var(--text-primary);margin:2px 0 0}
+.fc-seg textarea{width:100%;box-sizing:border-box;font:inherit;font-size:15px;line-height:1.6;resize:vertical;min-height:52px;margin-top:4px}
+.fc-badge{font-size:11px;background:var(--bg-accent);color:var(--text-accent);padding:2px 8px;border-radius:var(--radius);margin-left:8px}
+.fc-bar{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding-top:16px;border-top:0.5px solid var(--border);flex-wrap:wrap}
+.fc-primary{background:var(--fill-accent,var(--bg-accent));color:var(--on-accent,var(--text-accent));border-color:transparent}
+</style>
+<div style="padding:0.5rem 0 0.75rem;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+<span style="font-size:14px;color:var(--text-secondary)" id="fc-meta"></span>
+<span style="font-size:13px;color:var(--text-muted)" id="fc-hint">Review the text, then approve or edit</span>
+</div>
+<div id="fc-list"></div>
+<div class="fc-bar">
+<span id="fc-err" style="font-size:13px;color:var(--text-danger);margin-right:auto"></span>
+<button id="fc-cancel" style="display:none">Cancel</button>
+<button id="fc-edit"><i class="ti ti-edit" aria-hidden="true" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Edit transcript</button>
+<button id="fc-go" class="fc-primary"><i class="ti ti-check" aria-hidden="true" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Approve transcript ↗</button>
+</div>
+<script>
+const D=__FC_DATA__;
+let editing=false;
+const $=id=>document.getElementById(id);
+$('fc-meta').textContent='Detected language: '+D.language+' · '+D.segments.length+' segments'+(D.estimated?' · word timing estimated':'');
+function ts(s){const t=Math.max(0,s),m=Math.floor(t/60),x=(t%60).toFixed(1).padStart(4,'0');return String(m).padStart(2,'0')+':'+x}
+function render(){
+ $('fc-list').innerHTML=D.segments.map((s,i)=>'<div class="fc-seg"><div class="fc-n">['+s.n+']</div><div><div class="fc-ts">'+ts(s.start)+' → '+ts(s.end)+'<span class="fc-badge" id="b'+i+'" style="display:none">Edited</span></div>'+(editing?'<textarea id="t'+i+'" aria-label="Segment '+s.n+' text"></textarea>':'<p class="fc-tx"></p>')+'</div></div>').join('');
+ D.segments.forEach((s,i)=>{if(editing){const t=$('t'+i);t.value=s.draft;t.oninput=()=>{s.draft=t.value;$('b'+i).style.display=s.draft.trim()!==s.text?'inline':'none';$('fc-err').textContent=''};$('b'+i).style.display=s.draft.trim()!==s.text?'inline':'none'}else{document.querySelectorAll('.fc-tx')[i].textContent=s.text}});
+ $('fc-edit').style.display=editing?'none':'';
+ $('fc-cancel').style.display=editing?'':'none';
+ $('fc-go').innerHTML=editing?'<i class="ti ti-device-floppy" aria-hidden="true" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Save changes ↗':'<i class="ti ti-check" aria-hidden="true" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Approve transcript ↗';
+ $('fc-hint').textContent=editing?'Clear a segment\'s text to delete it':'Review the text, then approve or edit';
+}
+D.segments.forEach(s=>s.draft=s.text);
+$('fc-edit').onclick=()=>{editing=true;render();const t=$('t0');t&&t.focus()};
+$('fc-cancel').onclick=()=>{D.segments.forEach(s=>s.draft=s.text);editing=false;$('fc-err').textContent='';render()};
+$('fc-go').onclick=()=>{
+ if(!editing){sendPrompt('Transcript approved');return}
+ const ch=D.segments.filter(s=>s.draft.trim()!==s.text);
+ if(!ch.length){$('fc-err').textContent='No changes yet. Edit a segment first, or cancel.';return}
+ sendPrompt('Apply these transcript edits:\n'+ch.map(s=>'['+s.n+'] '+(s.draft.trim()?s.draft.trim().replace(/\s+/g,' '):'(delete)')).join('\n'));
+};
+render();
+</script>

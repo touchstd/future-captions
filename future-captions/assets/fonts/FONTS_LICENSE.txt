@@ -1,0 +1,3 @@
+Montserrat, Playfair Display, Inter, Bricolage Grotesque and Bangers are licensed under the SIL Open Font License 1.1
+(https://openfontlicense.org). Source: https://github.com/google/fonts
+They are bundled here unmodified so captions render identically on every machine.

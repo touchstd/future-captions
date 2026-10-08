@@ -1,0 +1,75 @@
+<h2 class="sr-only">Caption setup: text style options for punctuation and letter case, a one or two line layout toggle, and animated previews of six caption presets using the text The Future is Now.</h2>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Playfair+Display:wght@500&family=Inter:wght@500&family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Bangers&display=swap" rel="stylesheet">
+<style>
+.pv{position:relative;aspect-ratio:16/9;background:#141418;border-radius:12px;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8%;box-sizing:border-box}
+.cap{position:relative;text-align:center;color:#fff;line-height:1.3;min-height:1em}
+.w{display:inline-block;position:relative;z-index:1;margin:0 .14em}
+.hl{position:absolute;background:#7F77DD;border-radius:6px;transition:all .16s ease;z-index:0;opacity:0}
+.p2 .w{transition:opacity .5s ease,filter .5s ease,transform .5s ease}
+.bx{position:absolute;border-radius:7px;z-index:0;opacity:0}
+.c5 .w{margin:0 .2em}
+.c6 .w{margin:0 .16em;-webkit-text-stroke:5px #000;paint-order:stroke fill;text-shadow:3px 4px 0 #000;letter-spacing:.02em}
+.seg{display:inline-flex;border:0.5px solid var(--border-strong);border-radius:var(--radius);overflow:hidden}
+.seg button{border:none;border-radius:0;padding:6px 12px;font-size:13px}
+.seg button.on{background:var(--bg-accent);color:var(--text-accent)}
+.opt{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:10px 12px}
+.lbl{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+.st{font-size:12px;letter-spacing:.04em;color:var(--text-muted);margin:0 0 10px}
+</style>
+<div style="padding:1rem 0 1.25rem">
+<p class="st">1 · TEXT STYLE</p>
+<div class="opt">
+<span style="font-size:14px;color:var(--text-secondary)">Punctuation</span>
+<div><div class="seg" data-k="punct"><button data-v="keep" class="on">Keep</button><button data-v="hide">Hide</button></div></div>
+<span style="font-size:14px;color:var(--text-secondary)">Case</span>
+<div><div class="seg" data-k="case"><button data-v="original" class="on">As spoken</button><button data-v="lower">lowercase</button><button data-v="upper">UPPERCASE</button></div></div>
+<span style="font-size:14px;color:var(--text-secondary)">Layout</span>
+<div><div class="seg" data-k="lines"><button data-v="1" class="on">One line</button><button data-v="2">Two lines</button></div></div>
+</div>
+</div>
+<p class="st">2 · CHOOSE A PRESET</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px" id="grid"></div>
+<script>
+const PRE=[
+ ['01','Karaoke','Box sweeps word by word','font-family:Montserrat,system-ui,sans-serif;font-size:20px;font-weight:700'],
+ ['02','Elegant','Serif, blur and motion',"font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:500"],
+ ['03','Cinema','Subtitle by subtitle, hard cut','font-family:Inter,Arial,sans-serif;font-size:18px;font-weight:500'],
+ ['04','Word by word','One word at a time, no motion','font-family:Montserrat,system-ui,sans-serif;font-size:23px;font-weight:700'],
+ ['05','Dynamic karaoke','Stretchy box, hopping words',"font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:21px;font-weight:800"],
+ ['06','Cartoon','Comic pop, squash and wobble',"font-family:Bangers,Impact,sans-serif;font-size:27px"]];
+const RAW=["The","Future","is","Now!"],ST=[0.4,0.95,1.5,2.05],END=3.4,CYC=4.3;
+const S={punct:'keep',case:'original',lines:1};let gen=0,c0=0,W=[];
+const $=id=>document.getElementById(id);
+$('grid').innerHTML=PRE.map(p=>'<div><div class="pv"><div class="cap c'+p[0].slice(1)+(p[0]==='02'?' p2':'')+'" id="c'+p[0].slice(1)+'" style="'+p[3]+'"></div></div><div class="lbl"><div><div style="font-size:14px;font-weight:500">Preset '+p[0]+' · '+p[1]+'</div><div style="font-size:12px;color:var(--text-secondary)">'+p[2]+'</div></div><button data-p="'+p[0]+'">Choose ↗</button></div></div>').join('');
+function words(){return RAW.map(w=>{if(S.punct==='hide')w=w.replace(/^[^\p{L}\p{N}$]+|[^\p{L}\p{N}%]+$/gu,'');return S.case==='upper'?w.toUpperCase():S.case==='lower'?w.toLowerCase():w})}
+function html(){return W.map((w,i)=>'<span class="w">'+w+'</span>'+(S.lines===2&&i===1?'<br>':' ')).join('')}
+function cin(){return S.lines===2?'<span id="c3a">'+W[0]+' '+W[1]+'<br>'+W[2]+' '+W[3]+'</span><span id="c3b"></span>':'<span id="c3a">'+W[0]+' '+W[1]+'</span><span id="c3b">'+W[2]+' '+W[3]+'</span>'}
+function build(){W=words();['c1','c2','c5','c6'].forEach(id=>$(id).innerHTML=html());$('c3').innerHTML=cin();$('c1').insertAdjacentHTML('afterbegin','<div class="hl" id="hl"></div>');$('c5').insertAdjacentHTML('afterbegin','<div class="bx" id="bx"></div>');$('c4').innerHTML='<span class="w" id="solo"></span>'}
+function ws(id){return $(id).querySelectorAll('.w')}
+function reset(){$('hl').style.opacity=0;ws('c2').forEach(e=>{e.style.opacity=0;e.style.filter='blur(8px)';e.style.transform='translateY(12px)'});$('c3a').style.display='none';$('c3b').style.display='none';$('solo').textContent=''}
+function step(i){const e=ws('c1')[i],h=$('hl');h.style.left=(e.offsetLeft-6)+'px';h.style.top=(e.offsetTop-1)+'px';h.style.width=(e.offsetWidth+12)+'px';h.style.height=(e.offsetHeight+2)+'px';h.style.opacity=1;const f=ws('c2')[i];f.style.opacity=1;f.style.filter='blur(0)';f.style.transform='translateY(0)';$('solo').textContent=W[i];if(i===0)$('c3a').style.display='inline';if(i===2&&S.lines===1){$('c3a').style.display='none';$('c3b').style.display='inline'}}
+function out(){$('hl').style.opacity=0;ws('c2').forEach(e=>{e.style.opacity=0;e.style.filter='blur(8px)';e.style.transform='translateY(-10px)'});$('c3a').style.display='none';$('c3b').style.display='none';$('solo').textContent=''}
+function cycle(g){if(g!==gen)return;c0=performance.now();reset();W.forEach((_,i)=>setTimeout(()=>{if(g===gen)step(i)},ST[i]*1000));setTimeout(()=>{if(g===gen)out()},END*1000);setTimeout(()=>cycle(g),CYC*1000)}
+const cl=x=>Math.max(0,Math.min(1,x)),eo=p=>1-Math.pow(1-cl(p),3),ei=p=>Math.pow(cl(p),3),eio=p=>{p=cl(p);return p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2};
+const bo=p=>{p=cl(p);const k=1.9;return 1+(k+1)*Math.pow(p-1,3)+k*Math.pow(p-1,2)},el=p=>{p=cl(p);return p===0||p===1?p:Math.pow(2,-9*p)*Math.sin((p*10-.75)*2*Math.PI/3)+1};
+function act(t){let a=0;ST.forEach((s,i)=>{if(s<=t)a=i});return a}
+function f5(t){const cap=$('c5'),el5=ws('c5'),bx=$('bx');if(!el5.length)return;const a=act(t),pa=(t-ST[a])/.2,q=t>END-.3?ei((t-(END-.3))/.3):0;
+ const on=t>=ST[0]-.1&&t<END;cap.style.opacity=on?1-q:0;cap.style.transform='translateY('+(-q*14)+'px) scale('+(1-.3*q)+')';
+ const g=j=>{const e=el5[j],k=j===3?1.08:1;return[e.offsetLeft+e.offsetWidth/2,e.offsetTop+e.offsetHeight/2+1,(e.offsetWidth+12)*k,(e.offsetHeight+2)*k]};
+ let[cx,cy,bw,bh]=g(a),tilt=0;if(a>0&&pa<1){const[px,py,pw,ph]=g(a-1),e=eio(pa),s=Math.sin(Math.PI*cl(pa));cx=px+(cx-px)*e;cy=py+(cy-py)*e;bw=(pw+(bw-pw)*e)*(1+.3*s);bh=(ph+(bh-ph)*e)*(1-.14*s);tilt=7*s*(cx>=px?1:-1)}else if(a===0&&pa<1){const k=bo(pa/.9);bw*=k;bh*=k}
+ bx.style.opacity=t>=ST[0]?1:0;bx.style.background=a===3?'#FF4F8B':'#FFD23F';bx.style.left=(cx-bw/2)+'px';bx.style.top=(cy-bh/2)+'px';bx.style.width=Math.max(0,bw)+'px';bx.style.height=Math.max(0,bh)+'px';bx.style.transform='rotate('+tilt+'deg)';
+ el5.forEach((w,j)=>{const e=(t-(ST[j]-.1))/.32;if(e<0){w.style.opacity=0;return}w.style.opacity=1;let sc=.55+.45*bo(e),ang=(1-eo(e))*(j%2?-14:14),dy=(1-eo(e))*10;
+  const dark=j===a&&(a===0||pa>=.55);if(j===a){const jp=cl((t-ST[j])/.24);dy-=4*Math.sin(Math.PI*jp);sc*=(1+.07*Math.sin(Math.PI*jp))*(j===3?1.08:1)}
+  w.style.color=dark?'#141414':'#fff';w.style.transform='translateY('+dy+'px) rotate('+ang+'deg) scale('+sc+')'})}
+function f6(t){const e6=ws('c6');if(!e6.length)return;const a=act(t),n=e6.length;
+ e6.forEach((w,j)=>{const e=(t-(ST[j]-.05))/.55;if(e<0||t>=END){w.style.opacity=0;return}w.style.opacity=1;const rest=[-3,2.5,-2,3][j],st=[16,-19,14,-21][j];
+  const s=el(e),sq=.24*Math.sin(cl(e)*3*Math.PI)*(1-cl(e));let sx=s*(1+sq),sy=s*(1-sq),ang=rest+(st-rest)*(1-eo(e)),dy=(1-eo(e))*6;
+  if(j===a){const q=(t-ST[j])/.45;let big=j===3?1.12:1.06;if(q<1){ang+=9*Math.sin(q*16)*(1-q);big+=.08*(1-q)}sx*=big;sy*=big}
+  const o=(t-(END-.24-(n-1-j)*.03))/.24;if(o>0){const k=(1+.25*Math.sin(Math.PI*cl(o)))*(1-ei(o));sx*=k;sy*=k}
+  w.style.color=j===a?(j===3?'#FF4F8B':'#FFE14D'):'#fff';w.style.transform='translateY('+dy+'px) rotate('+ang+'deg) scale('+sx+','+sy+')'})}
+function loop(){const t=(performance.now()-c0)/1000;f5(t);f6(t);requestAnimationFrame(loop)}
+function start(){gen++;build();cycle(gen)}
+document.querySelectorAll('.seg').forEach(sg=>sg.querySelectorAll('button').forEach(b=>b.onclick=()=>{sg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const k=sg.dataset.k;S[k]=k==='lines'?+b.dataset.v:b.dataset.v;start()}));
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>sendPrompt('Use Preset '+b.dataset.p+' · '+(S.lines===1?'one line':'two lines')+' · punctuation: '+(S.punct==='keep'?'keep':'hide')+' · case: '+(S.case==='original'?'as spoken':S.case==='lower'?'lowercase':'UPPERCASE')));
+let started=false;const go=()=>{if(started)return;started=true;start();requestAnimationFrame(loop)};document.fonts&&document.fonts.ready.then(go);setTimeout(go,800);
+</script>
